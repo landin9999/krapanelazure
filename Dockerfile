@@ -1,10 +1,15 @@
+# PHP 8.2 with Apache
 FROM php:8.2-apache
-RUN a2enmod rewrite
-WORKDIR /var/www/html
+
+# Enable modules we need
+RUN a2enmod rewrite headers
+
+# Copy app
 COPY . /var/www/html
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html \
-    && mkdir -p /var/www/html/.data /var/www/html/ogas
-RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
+
+# Apache runs on 80 in this image (good for Azure)
 EXPOSE 80
-CMD ["apache2-foreground"]
+
+# Healthcheck (optional; useful locally and in some orchestrators)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD curl -f http://localhost/healthz || exit 1
